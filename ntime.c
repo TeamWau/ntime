@@ -4,7 +4,7 @@
  *
  * TODO: (in order of importance)
  * 1. Squash compiler warnings (about printing uint64_t's with the format string %llu)
- * 
+ *
  */
 #include <stdio.h>
 #include <time.h>
@@ -38,14 +38,15 @@ int measureTime( char* program, char** program_args ) {
 
     if( silent == 'y' ) {
         devnull = open( "/dev/null", O_WRONLY );
-        stdout_cp = dup( 1 );
-        close( 1 );
+        stdout_cp = dup( STDOUT_FILENO );
+	fflush( stdout ); //Ensuring buffers are clear
+        close( STDOUT_FILENO );
         dup2( devnull, 1 );
     }
 
     /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
     clock_gettime( CLOCK_MONOTONIC, &start );
-    
+
     pID = fork();
     if( pID == 0 ) {
         execvp( program, program_args );
@@ -61,7 +62,11 @@ int measureTime( char* program, char** program_args ) {
 
         uint64_t tdiff = getTimeDiff( &end, &start );
 
-        if( silent == 'y' ) { dup2( stdout_cp, 1 ); }
+        if( silent == 'y' ) {
+		fflush( stdout );
+		dup2( stdout_cp, STDOUT_FILENO );
+		close( stdout_cp ); //housekeeping
+	}
 
         if( colour == 'y' ) {
             printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", tdiff );
