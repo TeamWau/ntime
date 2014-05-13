@@ -10,12 +10,15 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <stdint.h>
 #include <getopt.h>
 
 #define VERSION_NUMBER "1.0.0"
-char colour;
+char colour, silent;
+int stdout_cp, devnull;
 
 uint64_t getTimeDiff( struct timespec *time_A, struct timespec *time_B ) {
     return ( ( time_A->tv_sec * 1000000000 ) + time_A->tv_nsec ) -
@@ -33,7 +36,7 @@ int measureTime( char* program, char** program_args ) {
 
     /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
     clock_gettime( CLOCK_MONOTONIC, &start );
-
+    
     pID = fork();
     if( pID == 0 ) {
         execvp( program, program_args );
