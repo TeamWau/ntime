@@ -10,12 +10,15 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <stdint.h>
 #include <getopt.h>
 
 #define VERSION_NUMBER "1.0.0"
-char colour;
+char colour, silent;
+int stdout_cp, devnull;
 
 uint64_t getTimeDiff( struct timespec *time_A, struct timespec *time_B ) {
     return ( ( time_A->tv_sec * 1000000000 ) + time_A->tv_nsec ) -
@@ -33,10 +36,18 @@ int measureTime( char* program, char** program_args ) {
 
     /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
     clock_gettime( CLOCK_MONOTONIC, &start );
+    
+    if( silent == 'y' ) {
+        devnull = open( "/dev/null", O_WRONLY );
+        stdout_cp = dup( 1 );
+        close( 1 );
+        dup2( devnull, 1 );
+    }
 
     pID = fork();
     if( pID == 0 ) {
         execvp( program, program_args );
+        if( silent == 'y' ) { dup2( stdout_cp, 1 ); }
     }
     else if( pID < 0 ) {
         return 1;
@@ -48,6 +59,7 @@ int measureTime( char* program, char** program_args ) {
         clock_gettime( CLOCK_MONOTONIC, &end );
 
         uint64_t tdiff = getTimeDiff( &end, &start );
+
 
         if( colour == 'y' ) {
             printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", tdiff );
@@ -75,7 +87,7 @@ int main( int argc, char **argv ) {
     }
         /* Parse args for ntime */
         int opt, flags;
-        opt = getopt( 2, argv, "nv" );
+        opt = getopt( 2, argv, "snv" );
         switch( opt ){
             case 'n':
                 flags = 1;
@@ -84,6 +96,9 @@ int main( int argc, char **argv ) {
                 printf( "%s - version %s\n", argv[0], VERSION_NUMBER );
                 return 0;
                 break;
+            case 's':
+                flags = 2;
+                break;
             default:
                 flags = 0;
                 break;
@@ -91,11 +106,17 @@ int main( int argc, char **argv ) {
 
         if( flags == 0 ) {
             colour = 'y';
+            silent = 'n';
             measureTime( argv[1], argv + 1 );
             return 0;
         }
         else if( flags == 1 ) {
             colour = 'n';
+            measureTime( argv[2], argv + 2 );
+            return 0;
+        }
+        else if( flags == 2 ) {
+            silent = 'y';
             measureTime( argv[2], argv + 2 );
             return 0;
         }
