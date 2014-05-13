@@ -3,19 +3,24 @@
  * See COPYING for details
  *
  * TODO: (in order of importance)
- * 1. Add silent mode that redirects the user-run program's stdout and stderr to /dev/null
- * 2. Squash compiler warnings (about printing uint64_t's with the format string %llu)
+ * 1. Squash compiler warnings (about printing uint64_t's with the format string %llu)
  * 
  */
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <stdint.h>
 #include <getopt.h>
 
+#define TRUE 1
+#define FALSE 0
+
 #define VERSION_NUMBER "1.0.0"
-char colour;
+char colour, silent;
+int stdout_cp, devnull;
 
 uint64_t getTimeDiff( struct timespec *time_A, struct timespec *time_B ) {
     return ( ( time_A->tv_sec * 1000000000 ) + time_A->tv_nsec ) -
@@ -29,6 +34,13 @@ int measureTime( char* program, char** program_args ) {
 
     if( program_args == NULL ) {
         program_args[0] = " ";
+    }
+
+    if( silent == 'y' ) {
+        devnull = open( "/dev/null", O_WRONLY );
+        stdout_cp = dup( 1 );
+        close( 1 );
+        dup2( devnull, 1 );
     }
 
     /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
@@ -49,6 +61,8 @@ int measureTime( char* program, char** program_args ) {
 
         uint64_t tdiff = getTimeDiff( &end, &start );
 
+        if( silent == 'y' ) { dup2( stdout_cp, 1 ); }
+
         if( colour == 'y' ) {
             printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", tdiff );
             return 0;
@@ -62,41 +76,44 @@ int measureTime( char* program, char** program_args ) {
 
 int main( int argc, char **argv ) {
     if( argc == 1 ) {
-        printf( "%s - precise time program\nInvocation: %s [-nv] <program> <args for program>\n", argv[0], argv[0] );
+        printf( "%s - precise time program\nInvocation: %s [-nvs] <program> <args for program>\n", argv[0], argv[0] );
 
-        printf( "Arguments for %s: \n'-n': disable coloured output.\n'-v': print version and exit.\n", argv[0] ); 
+        printf( "Arguments for %s: \n'-n': disable coloured output.\n'-v': print version and exit.\n'-s': supress ran program's stdout.\n", argv[0] ); 
 
-        printf( "\nNOTICE: Times are \033[1mapproximate\033[0m! As this is a very accurate timer, it measures the overhead time of its own execution, as well as any work done by the kernel.\nWhat this means is that the times are likely to vary heavily and should probably be averaged versus used as-is as a benchmark.\n" );
-
-        printf( "\nError: no program specified, terminating.\n" );
-
+        printf( "\nNOTICE: Times are \033[1mapproximate\033[0m! As this is a very accurate timer, it measures the overhead time of its own execution, as well as any work done by the kernel.\n"
+                "What this means is that the times are likely to vary heavily and should probably be averaged versus used as-is as a benchmark.\n" 
+                "\nError: no program specified, terminating.\n"
+        );
         return 1;
 
     }
-        /* Parse args for ntime */
         int opt, flags;
-        opt = getopt( 2, argv, "nv" );
+        colour = 'y';
+        silent = 'n';
+
+        /* Parse args for ntime */
+        opt = getopt( 2, argv, "nvs" );
         switch( opt ){
             case 'n':
-                flags = 1;
+                flags = TRUE;
+                colour = 'n';
                 break;
             case 'v':
                 printf( "%s - version %s\n", argv[0], VERSION_NUMBER );
-                return 0;
+                break;
+            case 's':
+                flags = TRUE;
+                silent = 'y';
                 break;
             default:
-                flags = 0;
+                flags = FALSE;
+                measureTime( argv[1], argv + 1 );
                 break;
             }
 
-        if( flags == 0 ) {
-            colour = 'y';
-            measureTime( argv[1], argv + 1 );
-            return 0;
-        }
-        else if( flags == 1 ) {
-            colour = 'n';
-            measureTime( argv[2], argv + 2 );
-            return 0;
-        }
+    if( flags == TRUE ) {
+        measureTime( argv[2], argv + 2 );
+        return 0;
+    }
+    return 0;
 }
