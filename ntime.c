@@ -3,8 +3,7 @@
  * See COPYING for details
  *
  * TODO: (in order of importance)
- * 1. Add silent mode that redirects the user-run program's stdout and stderr to /dev/null
- * 2. Squash compiler warnings (about printing uint64_t's with the format string %llu)
+ * 1. Squash compiler warnings (about printing uint64_t's with the format string %llu)
  * 
  */
 #include <stdio.h>
@@ -18,6 +17,7 @@
 
 #define TRUE 1
 #define FALSE 0
+
 #define VERSION_NUMBER "1.0.0"
 char colour, silent;
 int stdout_cp, devnull;
@@ -36,9 +36,6 @@ int measureTime( char* program, char** program_args ) {
         program_args[0] = " ";
     }
 
-    /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
-    clock_gettime( CLOCK_MONOTONIC, &start );
-    
     if( silent == 'y' ) {
         devnull = open( "/dev/null", O_WRONLY );
         stdout_cp = dup( 1 );
@@ -46,6 +43,9 @@ int measureTime( char* program, char** program_args ) {
         dup2( devnull, 1 );
     }
 
+    /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
+    clock_gettime( CLOCK_MONOTONIC, &start );
+    
     pID = fork();
     if( pID == 0 ) {
         execvp( program, program_args );
@@ -76,21 +76,22 @@ int measureTime( char* program, char** program_args ) {
 
 int main( int argc, char **argv ) {
     if( argc == 1 ) {
-        printf( "%s - precise time program\nInvocation: %s [-nv] <program> <args for program>\n", argv[0], argv[0] );
+        printf( "%s - precise time program\nInvocation: %s [-nvs] <program> <args for program>\n", argv[0], argv[0] );
 
-        printf( "Arguments for %s: \n'-n': disable coloured output.\n'-v': print version and exit.\n", argv[0] ); 
+        printf( "Arguments for %s: \n'-n': disable coloured output.\n'-v': print version and exit.\n'-s': supress ran program's stdout.\n", argv[0] ); 
 
-        printf( "\nNOTICE: Times are \033[1mapproximate\033[0m! As this is a very accurate timer, it measures the overhead time of its own execution, as well as any work done by the kernel.\nWhat this means is that the times are likely to vary heavily and should probably be averaged versus used as-is as a benchmark.\n" );
-
-        printf( "\nError: no program specified, terminating.\n" );
-
+        printf( "\nNOTICE: Times are \033[1mapproximate\033[0m! As this is a very accurate timer, it measures the overhead time of its own execution, as well as any work done by the kernel.\n"
+                "What this means is that the times are likely to vary heavily and should probably be averaged versus used as-is as a benchmark.\n" 
+                "\nError: no program specified, terminating.\n"
+        );
         return 1;
 
     }
-        /* Parse args for ntime */
         int opt, flags;
         colour = 'y';
         silent = 'n';
+
+        /* Parse args for ntime */
         opt = getopt( 2, argv, "nvs" );
         switch( opt ){
             case 'n':
