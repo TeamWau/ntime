@@ -3,7 +3,7 @@
  * See COPYING for details
  *
  * TODO: (in order of importance)
- * 1. Comment code.
+ * 1. Add silent mode that redirects the user-run program's stdout and stderr to /dev/null
  * 2. Squash compiler warnings (about printing uint64_t's with the format string %llu)
  * 
  */
@@ -31,6 +31,7 @@ int measureTime( char* program, char** program_args ) {
         program_args[0] = " ";
     }
 
+    /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
     clock_gettime( CLOCK_MONOTONIC, &start );
 
     pID = fork();
@@ -43,6 +44,7 @@ int measureTime( char* program, char** program_args ) {
     else {
         waitpid( pID, &rs, 0 );
 
+        /* Gets the time from the clock then prints its result. */
         clock_gettime( CLOCK_MONOTONIC, &end );
 
         uint64_t tdiff = getTimeDiff( &end, &start );
@@ -71,6 +73,7 @@ int main( int argc, char **argv ) {
         return 1;
 
     }
+        /* Parse args for ntime */
         int opt, flags;
         opt = getopt( 2, argv, "nv" );
         switch( opt ){
