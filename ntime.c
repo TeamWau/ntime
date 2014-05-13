@@ -89,6 +89,8 @@ int main( int argc, char **argv ) {
     }
         /* Parse args for ntime */
         int opt, flags;
+        colour = 'y';
+        silent = 'n';
         opt = getopt( 2, argv, "nvs" );
         switch( opt ){
             case 'n':
@@ -104,8 +106,6 @@ int main( int argc, char **argv ) {
                 break;
             default:
                 flags = FALSE;
-                colour = 'y';
-                silent = 'n';
                 measureTime( argv[1], argv + 1 );
                 break;
             }
