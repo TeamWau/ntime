@@ -20,7 +20,7 @@
 
 #define VERSION_NUMBER "1.0.0"
 char colour, silent;
-int stdout_cp, devnull;
+int stdout_cp, stderr_cp, devnull;
 
 uint64_t getTimeDiff( struct timespec *time_A, struct timespec *time_B ) {
     return ( ( time_A->tv_sec * 1000000000 ) + time_A->tv_nsec ) -
@@ -38,10 +38,19 @@ int measureTime( char* program, char** program_args ) {
 
     if( silent == 'y' ) {
         devnull = open( "/dev/null", O_WRONLY );
+
         stdout_cp = dup( STDOUT_FILENO );
-	fflush( stdout ); //Ensuring buffers are clear
+        stderr_cp = dup( STDERR_FILENO );
+
+        /* Make sure buffers are clear */
+	    fflush( stdout ); 
+        fflush( stderr );
+
         close( STDOUT_FILENO );
-        dup2( devnull, 1 );
+        close( STDERR_FILENO );
+
+        dup2( devnull, STDOUT_FILENO );
+        dup2( devnull, STDERR_FILENO );
     }
 
     /* Starts the timer, forks ntime, then starts the user-specified program under the fork. */
@@ -63,10 +72,16 @@ int measureTime( char* program, char** program_args ) {
         uint64_t tdiff = getTimeDiff( &end, &start );
 
         if( silent == 'y' ) {
-		fflush( stdout );
-		dup2( stdout_cp, STDOUT_FILENO );
-		close( stdout_cp ); //housekeeping
-	}
+            /* Clears and restores stdout and stderr to ntime */
+		    fflush( stdout );
+            fflush( stderr );
+
+		    dup2( stdout_cp, STDOUT_FILENO );
+            dup2( stdout_cp, STDERR_FILENO );
+
+		    close( stdout_cp );
+            close( stderr_cp );
+	    }
 
         if( colour == 'y' ) {
             printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", tdiff );
