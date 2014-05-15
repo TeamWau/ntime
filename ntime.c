@@ -43,7 +43,7 @@ uint64_t measureTime( char* program, char** program_args ) {
         stderr_cp = dup( STDERR_FILENO );
 
         /* Make sure buffers are clear */
-	    fflush( stdout ); 
+        fflush( stdout ); 
         fflush( stderr );
 
         close( STDOUT_FILENO );
@@ -73,15 +73,15 @@ uint64_t measureTime( char* program, char** program_args ) {
 
         if( silent == 'y' ) {
             /* Clears and restores stdout and stderr to ntime */
-		    fflush( stdout );
+            fflush( stdout );
             fflush( stderr );
 
-		    dup2( stdout_cp, STDOUT_FILENO );
+            dup2( stdout_cp, STDOUT_FILENO );
             dup2( stdout_cp, STDERR_FILENO );
 
-		    close( stdout_cp );
+            close( stdout_cp );
             close( stderr_cp );
-	    }
+        }
     return tdiff;
     }
 
