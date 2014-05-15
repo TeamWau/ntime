@@ -162,11 +162,7 @@ int main( int argc, char **argv ) {
         return formatResult( argv[2], argv + 2 );
     }
 
-<<<<<<< HEAD
-    return 1; //if we get here, it means we didn't call measuretime above. Problem.
-=======
     //if we get here, it means we didn't call measuretime above. Problem.
     printf( "Problem.\n" );
     return 1; 
->>>>>>> testing
 }
