@@ -140,5 +140,5 @@ int main( int argc, char **argv ) {
         return 0;
     }
 
-    return 0;
+    return 1; //if we get here, it means we didn't call measuretime above. Problem.
 }
