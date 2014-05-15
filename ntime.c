@@ -140,7 +140,7 @@ int main( int argc, char **argv ) {
                 case 'd':
                     flags = TRUE;
                     numOnly = 'y';
-		    break;
+                    break;
                 default:
                     flags = FALSE;
                     break;
