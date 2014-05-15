@@ -19,7 +19,7 @@
 #define FALSE 0
 
 #define VERSION_NUMBER "1.1.0"
-char colour, silent;
+char colour, silent, numOnly;
 int stdout_cp, stderr_cp, devnull;
 
 uint64_t getTimeDiff( struct timespec *time_A, struct timespec *time_B ) {
@@ -27,7 +27,7 @@ uint64_t getTimeDiff( struct timespec *time_A, struct timespec *time_B ) {
            ( ( time_B->tv_sec * 1000000000 ) + time_B->tv_nsec );
 }
 
-int measureTime( char* program, char** program_args ) {
+uint64_t measureTime( char* program, char** program_args ) {
     struct timespec start, end;
     pid_t pID;
     int rs;
@@ -82,13 +82,24 @@ int measureTime( char* program, char** program_args ) {
 		    close( stdout_cp );
             close( stderr_cp );
 	    }
+    return tdiff;
+    }
+}
 
+int formatResult( char* program, char** program_args ) {
+    uint64_t result = measureTime( program, program_args );
+
+    if( numOnly == 'y' ) {
+        printf( "\n%llu\n", result );
+        return 0;
+    }
+    else if( numOnly == 'n' ) {
         if( colour == 'y' ) {
-            printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", tdiff );
+            printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", result );
             return 0;
         }
         else if( colour == 'n' ) {
-            printf( "\nntime approx. wall time result: %lluns\n", tdiff );
+            printf( "\nntime approx. wall time result: %lluns\n", result );
             return 0;
         }
     }
@@ -96,9 +107,9 @@ int measureTime( char* program, char** program_args ) {
 
 int main( int argc, char **argv ) {
     if( argc == 1 ) {
-        printf( "%s - precise time program\nInvocation: %s [-nvs] <program> <args for program>\n", argv[0], argv[0] );
+        printf( "%s - precise time program\nInvocation: %s [-dnvs] <program> <args for program>\n", argv[0], argv[0] );
 
-        printf( "Arguments for %s: \n'-n': disable coloured output.\n'-v': print version and exit.\n'-s': supress ran program's stdout.\n", argv[0] ); 
+        printf( "Arguments for %s: \n'-n': disable coloured output.\n'-v': print version and exit.\n'-s': supress ran program's stdout.\n'-d': disable colour and only display the number (useful for scripts when used with -s)\n", argv[0] ); 
 
         printf( "\nNOTICE: Times are \033[1mapproximate\033[0m! As this is a very accurate timer, it measures the overhead time of its own execution, as well as any work done by the kernel.\n"
                 "What this means is that the times are likely to vary heavily and should probably be averaged versus used as-is as a benchmark.\n" 
@@ -110,9 +121,10 @@ int main( int argc, char **argv ) {
         int opt, flags;
         colour = 'y';
         silent = 'n';
+        numOnly = 'n';
 
         /* Parse args for ntime */
-        while ( ( opt = getopt( 2, argv, "nvs" ) ) != -1 ) {
+        while ( ( opt = getopt( 2, argv, "nvsd" ) ) != -1 ) {
             switch( opt ){
                 case 'n':
                     flags = TRUE;
@@ -125,6 +137,9 @@ int main( int argc, char **argv ) {
                     flags = TRUE;
                     silent = 'y';
                     break;
+                case 'd':
+                    flags = TRUE;
+                    numOnly = 'y';
                 default:
                     flags = FALSE;
                     break;
@@ -132,11 +147,11 @@ int main( int argc, char **argv ) {
         }
 
     if( flags == FALSE ) {
-        measureTime( argv[1], argv + 1 );
+        formatResult( argv[1], argv + 1 );
         return 0;
     }
     else if( flags == TRUE ) {
-        measureTime( argv[2], argv + 2 );
+        formatResult( argv[2], argv + 2 );
         return 0;
     }
 
