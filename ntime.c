@@ -112,28 +112,30 @@ int main( int argc, char **argv ) {
         silent = 'n';
 
         /* Parse args for ntime */
-        opt = getopt( 2, argv, "nvs" );
-        switch( opt ){
-            case 'n':
-                flags = TRUE;
-                colour = 'n';
-                break;
-            case 'v':
-                printf( "%s - version %s\n", argv[0], VERSION_NUMBER );
-                break;
-            case 's':
-                flags = TRUE;
-                silent = 'y';
-                break;
-            default:
-                flags = FALSE;
-                measureTime( argv[1], argv + 1 );
-                break;
+        while ( ( opt = getopt( 2, argv, "nvs" ) ) != -1 ) {
+            switch( opt ){
+                case 'n':
+                    flags = TRUE;
+                    colour = 'n';
+                    break;
+                case 'v':
+                    printf( "%s - version %s\n", argv[0], VERSION_NUMBER );
+                    break;
+                case 's':
+                    flags = TRUE;
+                    silent = 'y';
+                    break;
+                default:
+                    flags = FALSE;
+                    measureTime( argv[1], argv + 1 );
+                    break;
             }
+        }
 
     if( flags == TRUE ) {
         measureTime( argv[2], argv + 2 );
         return 0;
     }
+
     return 0;
 }
