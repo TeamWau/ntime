@@ -18,7 +18,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define VERSION_NUMBER "1.1.0"
+#define VERSION_NUMBER "1.2.0"
 char colour, silent, numOnly;
 int stdout_cp, stderr_cp, devnull;
 
