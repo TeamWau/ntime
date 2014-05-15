@@ -18,7 +18,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define VERSION_NUMBER "1.1.0"
+#define VERSION_NUMBER "1.2.0"
 char colour, silent, numOnly;
 int stdout_cp, stderr_cp, devnull;
 
@@ -84,25 +84,33 @@ uint64_t measureTime( char* program, char** program_args ) {
 	    }
     return tdiff;
     }
+
+    return 1;
 }
 
 int formatResult( char* program, char** program_args ) {
     uint64_t result = measureTime( program, program_args );
 
-    if( numOnly == 'y' ) {
-        printf( "\n%llu\n", result );
-        return 0;
-    }
-    else if( numOnly == 'n' ) {
-        if( colour == 'y' ) {
-            printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", result );
+    if( result == 1 ) { return 1; }
+
+    else {
+        if( numOnly == 'y' ) {
+            printf( "\n%llu\n", result );
             return 0;
         }
-        else if( colour == 'n' ) {
-            printf( "\nntime approx. wall time result: %lluns\n", result );
-            return 0;
+        else if( numOnly == 'n' ) {
+            if( colour == 'y' ) {
+                printf( "\n\033[31;1mntime approx. wall time result: \033[32m%llu\033[36mns\033[0m\n", result );
+                return 0;
+            }
+            else if( colour == 'n' ) {
+                printf( "\nntime approx. wall time result: %lluns\n", result );
+                return 0;
+            }
         }
     }
+
+    return 1;
 }
 
 int main( int argc, char **argv ) {
@@ -148,13 +156,11 @@ int main( int argc, char **argv ) {
         }
 
     if( flags == FALSE ) {
-        formatResult( argv[1], argv + 1 );
-        return 0;
+        return formatResult( argv[1], argv + 1 ); 
     }
     else if( flags == TRUE ) {
-        formatResult( argv[2], argv + 2 );
-        return 0;
+        return formatResult( argv[2], argv + 2 );
     }
 
-    return 0;
+    return 1; //if we get here, it means we didn't call measuretime above. Problem.
 }
