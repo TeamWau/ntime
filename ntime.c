@@ -127,12 +127,15 @@ int main( int argc, char **argv ) {
                     break;
                 default:
                     flags = FALSE;
-                    measureTime( argv[1], argv + 1 );
                     break;
             }
         }
 
-    if( flags == TRUE ) {
+    if( flags == FALSE ) {
+        measureTime( argv[1], argv + 1 );
+        return 0;
+    }
+    else if( flags == TRUE ) {
         measureTime( argv[2], argv + 2 );
         return 0;
     }
