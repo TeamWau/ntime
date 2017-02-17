@@ -1,8 +1,9 @@
-/* Copyright 2014, TeamWau Software.
+/* Copyright 2014, 2017 TeamWau Software.
  * Licensed under the two-clause BSD license.
  * See COPYING for details
  *
  * TODO: (in order of importance)
+ * 0. Clean up code, argument parsing, etc.
  * 1. Squash compiler warnings (about printing uint64_t's with the format string %llu)
  *
  */
@@ -19,6 +20,7 @@
 #define FALSE 0
 
 #define VERSION_NUMBER "1.2.0"
+
 char colour, silent, numOnly;
 int stdout_cp, stderr_cp, devnull;
 
@@ -155,6 +157,7 @@ int main( int argc, char **argv ) {
             }
         }
 
+    flags = FALSE;
     if( flags == FALSE ) {
         return formatResult( argv[1], argv + 1 ); 
     }
